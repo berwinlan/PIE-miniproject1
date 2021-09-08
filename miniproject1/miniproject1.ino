@@ -1,5 +1,6 @@
-const uint8_t DEBOUNCE_INTERVAL = 250; // ms
+const uint8_t DEBOUNCE_INTERVAL = 10; // ms
 uint32_t debounce_time;
+bool SW_went_back_low;
 
 const uint16_t BLINK_INTERVAL = 500;  // ms
 uint32_t blink_time;
@@ -41,16 +42,13 @@ void all_on() {
   // Check for state
   uint32_t current_time;  // local variable for current time
 
-  current_time = millis();
-  if (current_time > debounce_time + DEBOUNCE_INTERVAL) {
-    if (digitalRead(SW) == HIGH) {
-      current_state = ALL_OFF; 
-      Serial.print("\nprior state: ");
-      Serial.print(prior_state);
-      Serial.print("     current state: ");
-      Serial.println(current_state);
-      Serial.println(current_state == prior_state);
-    }
+  if (digitalRead(SW) == HIGH) {
+    current_state = ALL_OFF; 
+    Serial.print("\nprior state: ");
+    Serial.print(prior_state);
+    Serial.print("     current state: ");
+    Serial.println(current_state);
+    Serial.println(current_state == prior_state);
   }
 
 //  // Clean up if leaving
@@ -82,18 +80,13 @@ void all_off() {
   // No state tasks
 
   // Check for state
-  uint32_t current_time;  // local variable for current time
-
-  current_time = millis();
-  if (current_time > debounce_time + DEBOUNCE_INTERVAL) {
-    if (digitalRead(SW) == HIGH) {
-      current_state = ALL_BLINKING; 
-      Serial.print("\nprior state: ");
-      Serial.print(prior_state);
-      Serial.print("     current state: ");
-      Serial.println(current_state);
-      Serial.println(current_state == prior_state);
-    }
+  if (digitalRead(SW) == HIGH) {
+    current_state = ALL_BLINKING; 
+    Serial.print("\nprior state: ");
+    Serial.print(prior_state);
+    Serial.print("     current state: ");
+    Serial.println(current_state);
+    Serial.println(current_state == prior_state);
   }
 
 //  // Clean up if leaving
@@ -194,18 +187,13 @@ void traveling() {
   digitalWrite(LED9, HIGH);
 
   // Check for state transition
-  uint32_t current_time;  // local variable for current time
-
-  current_time = millis();
-  if (current_time > debounce_time + DEBOUNCE_INTERVAL) {
-    if (digitalRead(SW) == HIGH) {
-      current_state = ALL_ON; 
-      Serial.print("\nprior state: ");
-      Serial.print(prior_state);
-      Serial.print("     current state: ");
-      Serial.println(current_state);
-      Serial.println(current_state == prior_state);
-    }
+  if (digitalRead(SW) == HIGH) {
+    current_state = ALL_ON; 
+    Serial.print("\nprior state: ");
+    Serial.print(prior_state);
+    Serial.print("     current state: ");
+    Serial.println(current_state);
+    Serial.println(current_state == prior_state);
   }
 
 //  // Clean up if leaving
@@ -240,28 +228,37 @@ void setup() {
   current_state = ALL_ON;
 
   debounce_time = millis();  // time when starting
+  SW_went_back_low = true;
   Serial.begin(9600);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
   uint32_t current_time;  // local variable for current time
+  bool SW_high;
 
   current_time = millis();
   if (current_time > debounce_time + DEBOUNCE_INTERVAL) {
-    switch (current_state) {
-      case ALL_ON:
-        all_on();
-        break;
-      case ALL_OFF:
-        all_off();
-        break;
-      case ALL_BLINKING:
-        all_blinking();
-        break;
-      case TRAVELING:
-        traveling();
-        break;
+    SW_high = digitalRead(SW) == HIGH;
+    if (SW_went_back_low && SW_high) {
+      SW_went_back_low = false;
+      switch (current_state) {
+        case ALL_ON:
+          all_on();
+          break;
+        case ALL_OFF:
+          all_off();
+          break;
+        case ALL_BLINKING:
+          all_blinking();
+          break;
+        case TRAVELING:
+          traveling();
+          break;
+      }
+    } else if (!SW_went_back_low && !SW_high) {
+      SW_went_back_low = true;
     }
+    debounce_time = current_time;
   }
 }
