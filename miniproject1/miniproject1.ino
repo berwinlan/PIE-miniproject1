@@ -1,6 +1,10 @@
+// TODO:
+// Figure out where the switch statement needs to go, or why the state tasks are only running once
+// Possible infinite loop in TRAVELING? tbd
+
 const uint8_t DEBOUNCE_INTERVAL = 10; // ms
 uint32_t debounce_time;
-bool SW_went_back_low;
+bool SW_went_back_low;  // track that button has finished
 
 const uint16_t BLINK_INTERVAL = 500;  // ms
 uint32_t blink_time;
@@ -38,6 +42,7 @@ void all_on() {
   }
 
   // No state tasks
+  Serial.println("ALL_ON state task");
 
   // Check for state
   uint32_t current_time;  // local variable for current time
@@ -134,18 +139,13 @@ void all_blinking() {
   }
 
   // Check for state transition
-  uint32_t current_time;  // local variable for current time
-
-  current_time = millis();
-  if (current_time > debounce_time + DEBOUNCE_INTERVAL) {
-    if (digitalRead(SW) == HIGH) {
-      current_state = TRAVELING; 
-      Serial.print("\nprior state: ");
-      Serial.print(prior_state);
-      Serial.print("     current state: ");
-      Serial.println(current_state);
-      Serial.println(current_state == prior_state);
-    }
+  if (digitalRead(SW) == HIGH) {
+    current_state = TRAVELING; 
+    Serial.print("\nprior state: ");
+    Serial.print(prior_state);
+    Serial.print("     current state: ");
+    Serial.println(current_state);
+    Serial.println(current_state == prior_state);
   }
 
 //  // Clean up if leaving
@@ -187,6 +187,7 @@ void traveling() {
   digitalWrite(LED9, HIGH);
 
   // Check for state transition
+  // I think there's an infinite loop here? maybe? -BL
   if (digitalRead(SW) == HIGH) {
     current_state = ALL_ON; 
     Serial.print("\nprior state: ");
@@ -218,11 +219,12 @@ void setup() {
   pinMode(LED13, OUTPUT);
   pinMode(SW, INPUT);
 
-  digitalWrite(LED9, LOW);
+  // Alternating lights = initialization complete
+  digitalWrite(LED9, HIGH);
   digitalWrite(LED10, LOW);
-  digitalWrite(LED11, LOW);
+  digitalWrite(LED11, HIGH);
   digitalWrite(LED12, LOW);
-  digitalWrite(LED13, LOW);
+  digitalWrite(LED13, HIGH);
 
   prior_state = NONE;
   current_state = ALL_ON;
