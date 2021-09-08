@@ -1,7 +1,8 @@
+const uint8_t DEBOUNCE_INTERVAL = 10; // ms
+uint32_t debounce_time;
 
-
-const uint8_t button_interval = 50;
-uint32_t button_time;
+const uint16_t BLINK_INTERVAL = 500;  // ms
+uint32_t blink_time;
 
 // Say which component is connect to what pin
 const uint8_t LED9 = 9;
@@ -35,17 +36,26 @@ void all_on() {
     digitalWrite(LED13, HIGH);
   }
 
-
   // No state tasks
 
   // Check for state
-  if (digitalRead(SW) == HIGH) {
-    current_state = ALL_OFF; 
+  uint32_t current_time;  // local variable for current time
+
+  current_time = millis();
+  if (current_time > debounce_time + DEBOUNCE_INTERVAL) {
+    if (digitalRead(SW) == HIGH) {
+      current_state = ALL_OFF; 
+      Serial.print("\nprior state: ");
+      Serial.print(prior_state);
+      Serial.print("     current state: ");
+      Serial.println(current_state);
+      Serial.println(current_state == prior_state);
+    }
   }
 
 //  // Clean up if leaving
 //  if (current_state != prior_state) {
-//    prior_state = current_state;
+//    current_state = ALL_OFF;
 //
 //    // Set all LEDs to LOW
 //    digitalWrite(LED9, LOW);
@@ -72,17 +82,86 @@ void all_off() {
   // No state tasks
 
   // Check for state
-  if (digitalRead(SW) == HIGH) {
-    current_state = ALL_ON; 
-    digitalWrite(SW, LOW);
+  uint32_t current_time;  // local variable for current time
+
+  current_time = millis();
+  if (current_time > debounce_time + DEBOUNCE_INTERVAL) {
+    if (digitalRead(SW) == HIGH) {
+      current_state = ALL_BLINKING; 
+      Serial.print("\nprior state: ");
+      Serial.print(prior_state);
+      Serial.print("     current state: ");
+      Serial.println(current_state);
+      Serial.println(current_state == prior_state);
+    }
   }
 
 //  // Clean up if leaving
 //  if (current_state != prior_state) {
+//    current_state = TRAVELING;
 //    prior_state = current_state;
 //
 //    // Set all LEDs to LOW
 //    digitalWrite(LED9, HIGH);
+//    digitalWrite(LED10, LOW);
+//    digitalWrite(LED11, LOW);
+//    digitalWrite(LED12, LOW);
+//    digitalWrite(LED13, LOW);
+//  }
+}
+
+void all_blinking() {
+  // TODO: make interval longer
+  uint32_t t;
+  
+  // If we are entering the state, check for state transition and initialize
+  if (current_state != prior_state) {
+    prior_state = current_state;
+
+    // Set alternating LEDs
+    digitalWrite(LED9, LOW);
+    digitalWrite(LED10, LOW);
+    digitalWrite(LED11, LOW);
+    digitalWrite(LED12, LOW);
+    digitalWrite(LED13, LOW);
+
+    blink_time = millis();
+  }
+
+  // State tasks
+  t = millis();
+  if (t >= blink_time + BLINK_INTERVAL) {
+    Serial.println("blinky time");
+    digitalWrite(LED9, !digitalRead(LED9));
+    digitalWrite(LED10, !digitalRead(LED10));
+    digitalWrite(LED11, !digitalRead(LED11));
+    digitalWrite(LED12, !digitalRead(LED12));
+    digitalWrite(LED13, !digitalRead(LED13));
+
+    blink_time = t;
+  }
+
+  // Check for state transition
+  uint32_t current_time;  // local variable for current time
+
+  current_time = millis();
+  if (current_time > debounce_time + DEBOUNCE_INTERVAL) {
+    if (digitalRead(SW) == HIGH) {
+      current_state = ALL_ON; 
+      Serial.print("\nprior state: ");
+      Serial.print(prior_state);
+      Serial.print("     current state: ");
+      Serial.println(current_state);
+      Serial.println(current_state == prior_state);
+    }
+  }
+
+//  // Clean up if leaving
+//  if (current_state != prior_state) {
+//    current_state = ALL_OFF;
+//
+//    // Set all LEDs to LOW
+//    digitalWrite(LED9, LOW);
 //    digitalWrite(LED10, LOW);
 //    digitalWrite(LED11, LOW);
 //    digitalWrite(LED12, LOW);
@@ -108,7 +187,7 @@ void setup() {
   prior_state = NONE;
   current_state = ALL_ON;
 
-  button_time = millis();  // time when starting
+  debounce_time = millis();  // time when starting
   Serial.begin(9600);
 }
 
@@ -117,15 +196,17 @@ void loop() {
   uint32_t current_time;  // local variable for current time
 
   current_time = millis();
-  if (current_time > button_time + button_interval) {
-      Serial.println(current_state);
-      switch (current_state) {
-        case ALL_ON:
-          all_on();
-          break;
-        case ALL_OFF:
-          all_off();
-          break;
-      }
+  if (current_time > debounce_time + DEBOUNCE_INTERVAL) {
+    switch (current_state) {
+      case ALL_ON:
+        all_on();
+        break;
+      case ALL_OFF:
+        all_off();
+        break;
+      case ALL_BLINKING:
+        all_blinking();
+        break;
+    }
   }
 }
