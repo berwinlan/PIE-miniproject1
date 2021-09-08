@@ -6,7 +6,7 @@ const uint8_t DEBOUNCE_INTERVAL = 10; // ms
 uint32_t debounce_time;
 bool SW_went_back_low;  // track that button has finished
 
-const uint16_t BLINK_INTERVAL = 500;  // ms
+const uint8_t BLINK_INTERVAL = 1000;  // ms
 uint32_t blink_time;
 
 // Say which component is connect to what pin
@@ -123,19 +123,23 @@ void all_blinking() {
     digitalWrite(LED13, LOW);
 
     blink_time = millis();
+//       Serial.println("enter blinky time");
   }
 
   // State tasks
   t = millis();
-  if (t >= blink_time + BLINK_INTERVAL) {
-    Serial.println("blinky time");
+  while (t < blink_time + BLINK_INTERVAL*2) {
+//    Serial.println("blinky time happening");
     digitalWrite(LED9, !digitalRead(LED9));
     digitalWrite(LED10, !digitalRead(LED10));
     digitalWrite(LED11, !digitalRead(LED11));
     digitalWrite(LED12, !digitalRead(LED12));
     digitalWrite(LED13, !digitalRead(LED13));
-
     blink_time = t;
+    delay(BLINK_INTERVAL);
+    if (digitalRead(SW) == HIGH) {
+      break;
+    }
   }
 
   // Check for state transition
@@ -242,6 +246,7 @@ void loop() {
   current_time = millis();
   if (current_time > debounce_time + DEBOUNCE_INTERVAL) {
     SW_high = digitalRead(SW) == HIGH;
+ //   Serial.println(current_state);
     if (SW_went_back_low && SW_high) {
       SW_went_back_low = false;
       switch (current_state) {
