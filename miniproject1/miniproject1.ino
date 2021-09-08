@@ -1,4 +1,4 @@
-const uint8_t DEBOUNCE_INTERVAL = 10; // ms
+const uint8_t DEBOUNCE_INTERVAL = 250; // ms
 uint32_t debounce_time;
 
 const uint16_t BLINK_INTERVAL = 500;  // ms
@@ -111,7 +111,6 @@ void all_off() {
 }
 
 void all_blinking() {
-  // TODO: make interval longer
   uint32_t t;
   
   // If we are entering the state, check for state transition and initialize
@@ -140,6 +139,59 @@ void all_blinking() {
 
     blink_time = t;
   }
+
+  // Check for state transition
+  uint32_t current_time;  // local variable for current time
+
+  current_time = millis();
+  if (current_time > debounce_time + DEBOUNCE_INTERVAL) {
+    if (digitalRead(SW) == HIGH) {
+      current_state = TRAVELING; 
+      Serial.print("\nprior state: ");
+      Serial.print(prior_state);
+      Serial.print("     current state: ");
+      Serial.println(current_state);
+      Serial.println(current_state == prior_state);
+    }
+  }
+
+//  // Clean up if leaving
+//  if (current_state != prior_state) {
+//    current_state = ALL_OFF;
+//
+//    // Set all LEDs to LOW
+//    digitalWrite(LED9, LOW);
+//    digitalWrite(LED10, LOW);
+//    digitalWrite(LED11, LOW);
+//    digitalWrite(LED12, LOW);
+//    digitalWrite(LED13, LOW);
+//  }
+}
+
+void traveling() {
+  uint32_t t;
+  uint16_t TRAVEL_INTERVAL = 300; // length of time each light is on (ms)
+  
+  // If we are entering the state, check for state transition and initialize
+  if (current_state != prior_state) {
+    prior_state = current_state;
+
+    // Set alternating LEDs
+    digitalWrite(LED9, HIGH);
+    digitalWrite(LED10, LOW);
+    digitalWrite(LED11, LOW);
+    digitalWrite(LED12, LOW);
+    digitalWrite(LED13, LOW);
+  }
+
+  // State tasks
+  t = millis();
+  for (int i = LED9; i <= LED13; i++) {
+    delay(TRAVEL_INTERVAL);
+    digitalWrite(i, !digitalRead(i));
+    digitalWrite(i+1, !digitalRead(i+1));
+  }
+  digitalWrite(LED9, HIGH);
 
   // Check for state transition
   uint32_t current_time;  // local variable for current time
@@ -206,6 +258,9 @@ void loop() {
         break;
       case ALL_BLINKING:
         all_blinking();
+        break;
+      case TRAVELING:
+        traveling();
         break;
     }
   }
