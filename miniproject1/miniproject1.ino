@@ -1,6 +1,6 @@
 // TODO:
-// Figure out where the switch statement needs to go, or why the state tasks are only running once
-// Possible infinite loop in TRAVELING? tbd
+// figure out the not always working switch problem
+// thought from a very tired friend - Arduino runs faster than we click - it reads it more than once and get confused????
 
 const uint8_t DEBOUNCE_INTERVAL = 10; // ms
 uint32_t debounce_time;
@@ -8,6 +8,10 @@ bool SW_went_back_low;  // track that button has finished
 
 const uint8_t BLINK_INTERVAL = 1000;  // ms
 uint32_t blink_time;
+
+uint8_t three_counter = 0;
+
+
 
 // Say which component is connect to what pin
 const uint8_t LED9 = 9;
@@ -183,15 +187,123 @@ void traveling() {
 
   // State tasks
   t = millis();
-  for (int i = LED9; i <= LED13; i++) {
-    delay(TRAVEL_INTERVAL);
-    digitalWrite(i, !digitalRead(i));
-    digitalWrite(i+1, !digitalRead(i+1));
+  while (true){
+      for (int i = LED9; i <= LED13; i++) {
+        delay(TRAVEL_INTERVAL);
+        digitalWrite(i, !digitalRead(i));
+        digitalWrite(i+1, !digitalRead(i+1));
+        
+      }
+        digitalWrite(LED9, HIGH);
+      if (digitalRead(SW) == HIGH) {
+      break;
+    }
   }
-  digitalWrite(LED9, HIGH);
 
   // Check for state transition
   // I think there's an infinite loop here? maybe? -BL
+  if (digitalRead(SW) == HIGH) {
+    current_state = SOS; 
+    Serial.print("\nprior state: ");
+    Serial.print(prior_state);
+    Serial.print("     current state: ");
+    Serial.println(current_state);
+    Serial.println(current_state == prior_state);
+  }
+
+//  // Clean up if leaving
+//  if (current_state != prior_state) {
+//    current_state = ALL_OFF;
+//
+//    // Set all LEDs to LOW
+//    digitalWrite(LED9, LOW);
+//    digitalWrite(LED10, LOW);
+//    digitalWrite(LED11, LOW);
+//    digitalWrite(LED12, LOW);
+//    digitalWrite(LED13, LOW);
+//  }
+}
+
+
+void blinking_SOS() {
+  uint32_t t;
+  
+  // If we are entering the state, check for state transition and initialize
+  if (current_state != prior_state) {
+    prior_state = current_state;
+
+    // Set alternating LEDs
+    digitalWrite(LED9, LOW);
+    digitalWrite(LED10, LOW);
+    digitalWrite(LED11, LOW);
+    digitalWrite(LED12, LOW);
+    digitalWrite(LED13, LOW);
+
+    blink_time = millis();
+//       Serial.println("enter blinky time");
+  }
+
+  // State tasks
+  t = millis();
+  while (t < blink_time + BLINK_INTERVAL*4) {
+
+
+//SSSSSSSSSSSSSSSSSSS
+       three_counter = 0;
+      while (three_counter < 6){
+//        digitalWrite(LED9, !digitalRead(LED9)); // this and the line below is if we want the "shorts" to be a physically shorter line
+        digitalWrite(LED9, LOW);        
+        digitalWrite(LED10, !digitalRead(LED10));
+        digitalWrite(LED11, !digitalRead(LED11));
+        digitalWrite(LED12, !digitalRead(LED12));
+//        digitalWrite(LED13, !digitalRead(LED13)); // this and the line below is if we want the "shorts" to be a physically shorter line
+        digitalWrite(LED13, LOW);
+        blink_time = t;
+        delay(BLINK_INTERVAL*2);
+        three_counter += 1;
+//        Serial.println("S1 : ");
+//        Serial.println(three_counter);
+      }
+        
+//OOOOOOOOOOOOOOOOOOOOOOOOOOOO
+        three_counter = 0;
+        while (three_counter < 6){
+        digitalWrite(LED9, !digitalRead(LED9));
+        digitalWrite(LED10, !digitalRead(LED10));
+        digitalWrite(LED11, !digitalRead(LED11));
+        digitalWrite(LED12, !digitalRead(LED12));
+        digitalWrite(LED13, !digitalRead(LED13));
+        blink_time = t;
+        delay(BLINK_INTERVAL*4);
+        three_counter += 1;
+//        Serial.println("O : ");
+//        Serial.println(three_counter);
+      }
+
+//SSSSSSSSSSSSSSSSSSS
+        three_counter = 0;
+      while (three_counter < 6){
+//        digitalWrite(LED9, !digitalRead(LED9)); // this and the line below is if we want the "shorts" to be a physically shorter line
+        digitalWrite(LED9, LOW);        
+        digitalWrite(LED10, !digitalRead(LED10));
+        digitalWrite(LED11, !digitalRead(LED11));
+        digitalWrite(LED12, !digitalRead(LED12));
+//        digitalWrite(LED13, !digitalRead(LED13)); // this and the line below is if we want the "shorts" to be a physically shorter line
+        digitalWrite(LED13, LOW);
+        blink_time = t;
+        delay(BLINK_INTERVAL*2);
+        three_counter += 1;
+//        Serial.println("S2: ");
+//        Serial.println(three_counter);
+      }
+        delay(BLINK_INTERVAL*3);
+      
+    if (digitalRead(SW) == HIGH) {
+      break;
+    }
+  }
+
+  // Check for state transition
   if (digitalRead(SW) == HIGH) {
     current_state = ALL_ON; 
     Serial.print("\nprior state: ");
@@ -261,6 +373,9 @@ void loop() {
           break;
         case TRAVELING:
           traveling();
+          break;
+         case SOS:
+          blinking_SOS();
           break;
       }
     } else if (!SW_went_back_low && !SW_high) {
