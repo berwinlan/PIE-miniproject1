@@ -9,6 +9,9 @@ bool SW_went_back_low;  // track that button has finished
 const uint8_t BLINK_INTERVAL = 1000;  // ms
 uint32_t blink_time;
 
+uint32_t travel_time;
+
+
 uint8_t three_counter = 0;
 
 
@@ -131,36 +134,41 @@ void all_blinking() {
   }
 
   // State tasks
-  t = millis();
-  while (t < blink_time + BLINK_INTERVAL*2) {
-//    Serial.println("blinky time happening");
-    digitalWrite(LED9, !digitalRead(LED9));
-    digitalWrite(LED10, !digitalRead(LED10));
-    digitalWrite(LED11, !digitalRead(LED11));
-    digitalWrite(LED12, !digitalRead(LED12));
-    digitalWrite(LED13, !digitalRead(LED13));
-    blink_time = t;
-    delay(BLINK_INTERVAL);
-    if (digitalRead(SW) == HIGH) {
-          digitalWrite(LED9, LOW);  
-          digitalWrite(LED10, LOW);
-          digitalWrite(LED11, LOW);
-          digitalWrite(LED12, LOW);
-          digitalWrite(LED13, LOW);        
-      break;
+  while (current_state == ALL_BLINKING || prior_state == ALL_BLINKING) {
+    t = millis();
+    Serial.println("in blinking while loop");
+    if (t >= blink_time + BLINK_INTERVAL){
+      Serial.println("BLINKING");
+      digitalWrite(LED9, !digitalRead(LED9));
+      digitalWrite(LED10, !digitalRead(LED10));
+      digitalWrite(LED11, !digitalRead(LED11));
+      digitalWrite(LED12, !digitalRead(LED12));
+      digitalWrite(LED13, !digitalRead(LED13));
+      blink_time = t;
     }
-  }
+//    if (digitalRead(SW) == HIGH) {       
+//      break;
+//    }
+      if (digitalRead(SW) == HIGH) {
+          current_state = TRAVELING; 
+          Serial.print("\nprior state: ");
+          Serial.print(prior_state);
+          Serial.print("     current state: ");
+          Serial.println(current_state);
+          Serial.println(current_state == prior_state);
+//          break;
+        }
+}
 
-  // Check for state transition
-  if (digitalRead(SW) == HIGH) {
-    current_state = TRAVELING; 
-    Serial.print("\nprior state: ");
-    Serial.print(prior_state);
-    Serial.print("     current state: ");
-    Serial.println(current_state);
-    Serial.println(current_state == prior_state);
-  }
-
+//  // Check for state transition
+//  if (digitalRead(SW) == HIGH) {
+//    current_state = TRAVELING; 
+//    Serial.print("\nprior state: ");
+//    Serial.print(prior_state);
+//    Serial.print("     current state: ");
+//    Serial.println(current_state);
+//    Serial.println(current_state == prior_state);
+//  }
 //  // Clean up if leaving
 //  if (current_state != prior_state) {
 //    current_state = ALL_OFF;
@@ -194,10 +202,12 @@ void traveling() {
   t = millis();
   while (true){
       for (int i = LED9; i <= LED13; i++) {
-        delay(TRAVEL_INTERVAL);
+        // check if TRAVEL_INTERVAL has elapsed
+        if (t < travel_time + TRAVEL_INTERVAL*2)
         digitalWrite(i, !digitalRead(i));
         digitalWrite(i+1, !digitalRead(i+1));
-        
+        //reset travel time
+        travel_time = t;
       }
         digitalWrite(LED9, HIGH);
       if (digitalRead(SW) == HIGH) {
@@ -211,7 +221,6 @@ void traveling() {
   }
 
   // Check for state transition
-  // I think there's an infinite loop here? maybe? -BL
   if (digitalRead(SW) == HIGH) {
     current_state = SOS; 
     Serial.print("\nprior state: ");
