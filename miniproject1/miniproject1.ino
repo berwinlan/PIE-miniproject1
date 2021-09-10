@@ -1,6 +1,6 @@
 // TODO:
 // figure out the not always working switch problem
-// thought from a very tired friend - Arduino runs faster than we click - it reads it more than once and get confused????
+
 
 const uint8_t DEBOUNCE_INTERVAL = 10; // ms
 uint32_t debounce_time;
@@ -142,6 +142,11 @@ void all_blinking() {
     blink_time = t;
     delay(BLINK_INTERVAL);
     if (digitalRead(SW) == HIGH) {
+          digitalWrite(LED9, LOW);  
+          digitalWrite(LED10, LOW);
+          digitalWrite(LED11, LOW);
+          digitalWrite(LED12, LOW);
+          digitalWrite(LED13, LOW);        
       break;
     }
   }
@@ -196,6 +201,11 @@ void traveling() {
       }
         digitalWrite(LED9, HIGH);
       if (digitalRead(SW) == HIGH) {
+          digitalWrite(LED9, LOW);  
+          digitalWrite(LED10, LOW);
+          digitalWrite(LED11, LOW);
+          digitalWrite(LED12, LOW);
+          digitalWrite(LED13, LOW);        
       break;
     }
   }
@@ -251,12 +261,10 @@ void blinking_SOS() {
 //SSSSSSSSSSSSSSSSSSS
        three_counter = 0;
       while (three_counter < 6){
-//        digitalWrite(LED9, !digitalRead(LED9)); // this and the line below is if we want the "shorts" to be a physically shorter line
         digitalWrite(LED9, LOW);        
         digitalWrite(LED10, !digitalRead(LED10));
         digitalWrite(LED11, !digitalRead(LED11));
         digitalWrite(LED12, !digitalRead(LED12));
-//        digitalWrite(LED13, !digitalRead(LED13)); // this and the line below is if we want the "shorts" to be a physically shorter line
         digitalWrite(LED13, LOW);
         blink_time = t;
         delay(BLINK_INTERVAL*2);
@@ -283,12 +291,10 @@ void blinking_SOS() {
 //SSSSSSSSSSSSSSSSSSS
         three_counter = 0;
       while (three_counter < 6){
-//        digitalWrite(LED9, !digitalRead(LED9)); // this and the line below is if we want the "shorts" to be a physically shorter line
         digitalWrite(LED9, LOW);        
         digitalWrite(LED10, !digitalRead(LED10));
         digitalWrite(LED11, !digitalRead(LED11));
         digitalWrite(LED12, !digitalRead(LED12));
-//        digitalWrite(LED13, !digitalRead(LED13)); // this and the line below is if we want the "shorts" to be a physically shorter line
         digitalWrite(LED13, LOW);
         blink_time = t;
         delay(BLINK_INTERVAL*2);
@@ -299,6 +305,11 @@ void blinking_SOS() {
         delay(BLINK_INTERVAL*3);
       
     if (digitalRead(SW) == HIGH) {
+          digitalWrite(LED9, LOW);  
+          digitalWrite(LED10, LOW);
+          digitalWrite(LED11, LOW);
+          digitalWrite(LED12, LOW);
+          digitalWrite(LED13, LOW);      
       break;
     }
   }
