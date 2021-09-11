@@ -7,7 +7,7 @@ const uint8_t LED12 = 12;
 const uint8_t LED13 = 13;
 const uint8_t SW = 8;
 
-// Variable LED brightness
+// Variable LED brightness for ALL_ON state
 const int POT = A0; // Analog pin pot is attached to
 uint16_t sensorValue;        // value read from the pot
 uint16_t outputValue;        // value output to the PWM (analog out) - output ceiling, overwrite HIGH
