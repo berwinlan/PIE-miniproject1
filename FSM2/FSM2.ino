@@ -33,9 +33,11 @@ const uint16_t TRAVEL_INTERVAL_LED11 = 3*TRAVEL_INTERVAL_LED9;
 const uint16_t TRAVEL_INTERVAL_LED12 = 4*TRAVEL_INTERVAL_LED9;
 const uint16_t TRAVEL_INTERVAL_LED13 = 5*TRAVEL_INTERVAL_LED9;
 
-uint8_t s1_counter = 0;
-uint8_t o_counter = 0;
-uint8_t s2_counter = 0;
+uint8_t s1_counter;
+uint8_t o_counter;
+uint8_t s2_counter;
+const uint16_t S_INTERVAL = 500;
+const uint16_t O_INTERVAL = 1000;
 
 void all_on() {
   // If we are entering the state, check for state transition and initialize
@@ -178,6 +180,7 @@ void all_blinking() {
   }
 }
 
+// TODO: LEDs aren't fully turning on and off (see for loop for how it should work)
 void traveling() {
   uint32_t t;
   uint16_t TRAVEL_INTERVAL = 300; // length of time each light is on (ms)
@@ -252,6 +255,7 @@ void traveling() {
   }
 }
 
+// TODO: doesn't pause atm :(
 void blinking_SOS() {
   uint32_t t;
   
@@ -267,15 +271,18 @@ void blinking_SOS() {
     digitalWrite(LED13, LOW);
 
     blink_time = millis();
+
+    s1_counter = 0;
+    o_counter = 0;
+    s2_counter = 0;
   }
 
   // Perform state tasks
   t = millis();
 
-  if (t >= blink_time + BLINK_INTERVAL && s1_counter < 6) {
 //SSSSSSSSSSSSSSSSSSS
-    Serial.println("SSSSSSSS");
-      s2_counter = 0;
+  if (t >= blink_time + S_INTERVAL && s1_counter < 6) {
+    Serial.println("1SSSSSSSS");
 //        digitalWrite(LED9, !digitalRead(LED9)); // this and the line below is if we want the "shorts" to be a physically shorter line
         digitalWrite(LED9, LOW);        
         digitalWrite(LED10, !digitalRead(LED10));
@@ -284,14 +291,17 @@ void blinking_SOS() {
 //        digitalWrite(LED13, !digitalRead(LED13)); // this and the line below is if we want the "shorts" to be a physically shorter line
         digitalWrite(LED13, LOW);
         blink_time = t;
-//        delay(BLINK_INTERVAL*2);
-        s1_counter += 1;
-//        Serial.println("S1 : ");
-//        Serial.println(three_counter);
-  } else if (t >= blink_time + BLINK_INTERVAL*10 && o_counter < 6) {
+
+//        Serial.print("S1 before : ");
+//        Serial.println(s1_counter);
+        s1_counter++;
+//        Serial.print("S1 : ");
+//        Serial.println(s1_counter);
+
 //OOOOOOOOOOOOOOOOOOOOOOOOOOOO
+  } else if (t >= blink_time + O_INTERVAL && s1_counter == 6) {
+
     Serial.println("OOOOOOOO");
-    s1_counter = 0;
 //        while (three_counter < 6){
     digitalWrite(LED9, !digitalRead(LED9));
     digitalWrite(LED10, !digitalRead(LED10));
@@ -299,15 +309,14 @@ void blinking_SOS() {
     digitalWrite(LED12, !digitalRead(LED12));
     digitalWrite(LED13, !digitalRead(LED13));
     blink_time = t;
-//        delay(BLINK_INTERVAL*4);
-    o_counter += 1;
+    o_counter++;
 //        Serial.println("O : ");
-//        Serial.println(three_counter);
-  } else if (t >= blink_time + BLINK_INTERVAL*20 && s2_counter < 6) { 
+//        Serial.println(o_counter);
+        
 //SSSSSSSSSSSSSSSSSSS
-    Serial.println("SSSSSSSS");
-        o_counter = 0;
-//      while (three_counter < 6){
+// TODO: This part isn't working properly - changing it to +S_INTERVAL creates
+  } else if (t >= blink_time + S_INTERVAL && o_counter == 6) { 
+//    Serial.println("2SSSSSSSS");
 //        digitalWrite(LED9, !digitalRead(LED9)); // this and the line below is if we want the "shorts" to be a physically shorter line
         digitalWrite(LED9, LOW);        
         digitalWrite(LED10, !digitalRead(LED10));
@@ -316,16 +325,26 @@ void blinking_SOS() {
 //        digitalWrite(LED13, !digitalRead(LED13)); // this and the line below is if we want the "shorts" to be a physically shorter line
         digitalWrite(LED13, LOW);
         blink_time = t;
-//        delay(BLINK_INTERVAL*2);
-        s2_counter += 1;
+        s2_counter++;
 //        Serial.println("S2: ");
-//        Serial.println(three_counter);
-      }
-//        delay(BLINK_INTERVAL*3);
+//        Serial.println(s2_counter);
+  } else if (t > blink_time + O_INTERVAL && s2_counter == 6) {   // pause between SOSes
+    // Set all LEDs to LOW
+    digitalWrite(LED9, LOW);
+    digitalWrite(LED10, LOW);
+    digitalWrite(LED11, LOW);
+    digitalWrite(LED12, LOW);
+    digitalWrite(LED13, LOW);
+  } else if (s1_counter == 6 && o_counter == 6 && s2_counter == 6) {
+      s1_counter = 0;
+      o_counter = 0;
+      s2_counter = 0;
+  }
 
   bool SW_high;                        // Local variable to store whether SW is high
   t = millis();                         // Get the current value of the millis timer
 
+  // Check for state transitions
   if (t >= debounce_time + DEBOUNCE_INTERVAL) {
     SW_high = digitalRead(SW) == HIGH;
     if (SW_went_back_low && SW_high) {
@@ -389,8 +408,8 @@ void loop() {
     case TRAVELING:
       traveling();
       break;
-//     case SOS:
-//      blinking_SOS();
-//      break;
+    case SOS:
+      blinking_SOS();
+      break;
   }
 }
