@@ -1,11 +1,16 @@
 
-// Say which component is connect to what pin
+// Say which component is connected to what pin
 const uint8_t LED9 = 9;
 const uint8_t LED10 = 10;
 const uint8_t LED11 = 11;
 const uint8_t LED12 = 12;
 const uint8_t LED13 = 13;
 const uint8_t SW = 8;
+
+// Variable LED brightness
+const int POT = A0; // Analog pin pot is attached to
+uint16_t sensorValue;        // value read from the pot
+uint16_t outputValue;        // value output to the PWM (analog out) - output ceiling, overwrite HIGH
 
 // For debouncing
 const uint8_t DEBOUNCE_INTERVAL = 10; // ms
@@ -43,21 +48,32 @@ void all_on() {
   // If we are entering the state, check for state transition and initialize
   if (current_state != prior_state) {
     prior_state = current_state;
-    digitalWrite(LED9, HIGH);
-    digitalWrite(LED10, HIGH);
-    digitalWrite(LED11, HIGH);
-    digitalWrite(LED12, HIGH);
-    digitalWrite(LED13, HIGH);
+//    digitalWrite(LED9, HIGH);
+//    digitalWrite(LED10, HIGH);
+//    digitalWrite(LED11, HIGH);
+//    digitalWrite(LED12, HIGH);
+//    digitalWrite(LED13, HIGH);
 
-//    analogWrite(LED9, outputValue);
-//    analogWrite(LED10, outputValue);
-//    analogWrite(LED11, outputValue);
-//    analogWrite(LED12, outputValue);
-//    analogWrite(LED13, outputValue);
+    analogWrite(LED9, outputValue);
+    analogWrite(LED10, outputValue);
+    analogWrite(LED11, outputValue);
+    analogWrite(LED12, outputValue);
+    analogWrite(LED13, outputValue);
   }
 
   // Perform state tasks
-//  Serial.println("ALL_ON state task");
+  // read the analog in value:
+  sensorValue = analogRead(POT);
+  // map it to the range of the analog out:
+  outputValue = map(sensorValue, 0, 1023, 0, 255);
+
+  analogWrite(LED9, outputValue);
+  analogWrite(LED10, outputValue);
+  analogWrite(LED11, outputValue);
+  analogWrite(LED12, outputValue);
+  analogWrite(LED13, outputValue);
+    
+  Serial.println(outputValue);
 
   uint32_t t;                           // Local variable to store the current value of the millis timer
   bool SW_high;                        // Local variable to store whether SW is high
@@ -146,6 +162,7 @@ void all_blinking() {
 
   // Perform state tasks
 //  Serial.println("BLINKING state task");
+
   t = millis();
   if (t >= blink_time + BLINK_INTERVAL) {
     digitalWrite(LED9, !digitalRead(LED9));
@@ -373,13 +390,14 @@ void setup() {
   pinMode(LED12, OUTPUT);
   pinMode(LED13, OUTPUT);
   pinMode(SW, INPUT);
+  pinMode(POT, INPUT);
   
-  // Alternating lights = initialization complete
-  digitalWrite(LED9, HIGH);
-  digitalWrite(LED10, LOW);
-  digitalWrite(LED11, HIGH);
-  digitalWrite(LED12, LOW);
-  digitalWrite(LED13, HIGH);
+//  // Alternating lights = initialization complete
+//  digitalWrite(LED9, HIGH);
+//  digitalWrite(LED10, LOW);
+//  digitalWrite(LED11, HIGH);
+//  digitalWrite(LED12, LOW);
+//  digitalWrite(LED13, HIGH);
 
   prior_state = NONE;
   current_state = ALL_ON;
@@ -395,6 +413,32 @@ void loop() {
 //  Serial.print(prior_state);
 //  Serial.print(" -> ");
 //  Serial.println(current_state);
+  uint32_t t;
+
+  t = millis();                         // Get the current value of the millis timer
+
+//  Serial.println(current_state);
+  if (t >= debounce_time + DEBOUNCE_INTERVAL) {
+    // read the analog in value:
+    sensorValue = analogRead(POT);
+    // map it to the range of the analog out:
+    outputValue = map(sensorValue, 0, 1023, 0, 255);
+  
+    // write to the analogOutPins (LED9-LED13)
+//    analogWrite(LED9, outputValue);
+//    analogWrite(LED10, outputValue);
+//    analogWrite(LED11, outputValue);
+//    analogWrite(LED12, outputValue);
+//    analogWrite(LED13, outputValue);  
+      // print the results to the Serial Monitor:
+      Serial.print("sensor = ");
+      Serial.print(sensorValue);
+      Serial.print("\t output = ");
+      Serial.println(outputValue);
+    
+    debounce_time = t;
+  }
+
   switch (current_state) {
     case ALL_ON:
       all_on();
