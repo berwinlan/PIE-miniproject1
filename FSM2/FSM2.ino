@@ -28,10 +28,14 @@ const uint16_t BLINK_INTERVAL = 500;  // Time interval between toggling blinking
 
 uint32_t travel_time;
 const uint16_t TRAVEL_INTERVAL_LED9 = 500;
-const uint16_t TRAVEL_INTERVAL_LED10 = 1000;
-const uint16_t TRAVEL_INTERVAL_LED11 = 1500;
-const uint16_t TRAVEL_INTERVAL_LED12 = 2000;
-const uint16_t TRAVEL_INTERVAL_LED13 = 2500;
+const uint16_t TRAVEL_INTERVAL_LED10 = 2*TRAVEL_INTERVAL_LED9;
+const uint16_t TRAVEL_INTERVAL_LED11 = 3*TRAVEL_INTERVAL_LED9;
+const uint16_t TRAVEL_INTERVAL_LED12 = 4*TRAVEL_INTERVAL_LED9;
+const uint16_t TRAVEL_INTERVAL_LED13 = 5*TRAVEL_INTERVAL_LED9;
+
+uint8_t s1_counter = 0;
+uint8_t o_counter = 0;
+uint8_t s2_counter = 0;
 
 void all_on() {
   // If we are entering the state, check for state transition and initialize
@@ -194,19 +198,24 @@ void traveling() {
 
   // Perform state tasks
   t = millis();
-  if (t >= travel_time + TRAVEL_INTERVAL_LED9) {
+  if (t >= travel_time + TRAVEL_INTERVAL_LED9 && t < travel_time + TRAVEL_INTERVAL_LED10) {
+//    Serial.println("interval LED9");
     digitalWrite(LED9, !digitalRead(LED9));
     digitalWrite(LED10, !digitalRead(LED10));
-  } else if (t >= travel_time + TRAVEL_INTERVAL_LED10) {
+  } else if (t >= travel_time + TRAVEL_INTERVAL_LED10 && t < travel_time + TRAVEL_INTERVAL_LED11) {
+//    Serial.println("interval LED10");
     digitalWrite(LED10, !digitalRead(LED10));
     digitalWrite(LED11, !digitalRead(LED11));
-  } else if (t >= travel_time + TRAVEL_INTERVAL_LED11) {
+  } else if (t >= travel_time + TRAVEL_INTERVAL_LED11 && t < travel_time + TRAVEL_INTERVAL_LED12) {
+//    Serial.println("interval LED11");
     digitalWrite(LED11, !digitalRead(LED11));
     digitalWrite(LED12, !digitalRead(LED12));
-  } else if (t >= travel_time + TRAVEL_INTERVAL_LED12) {
+  } else if (t >= travel_time + TRAVEL_INTERVAL_LED12 && t < travel_time + TRAVEL_INTERVAL_LED13) {
+//    Serial.println("interval LED12");
     digitalWrite(LED12, !digitalRead(LED12));
     digitalWrite(LED13, !digitalRead(LED13));
   } else if (t >= travel_time + TRAVEL_INTERVAL_LED13) {
+//    Serial.println("interval LED13");
     digitalWrite(LED13, !digitalRead(LED13));
     digitalWrite(LED9, !digitalRead(LED9));
     travel_time = t;
@@ -219,6 +228,100 @@ void traveling() {
 //    digitalWrite(i+1, !digitalRead(i+1));
 //  }
 //  digitalWrite(LED9, HIGH);
+
+  bool SW_high;                        // Local variable to store whether SW is high
+  t = millis();                         // Get the current value of the millis timer
+
+  if (t >= debounce_time + DEBOUNCE_INTERVAL) {
+    SW_high = digitalRead(SW) == HIGH;
+    if (SW_went_back_low && SW_high) {
+      current_state = SOS;
+      SW_went_back_low = false;
+    } else if (!SW_went_back_low && !SW_high) {
+      SW_went_back_low = true;
+    }
+    debounce_time = t;
+  }
+
+  if (current_state != prior_state) {         // If we are leaving the state, do clean up stuff
+    digitalWrite(LED9, LOW);
+    digitalWrite(LED10, LOW);
+    digitalWrite(LED11, LOW);
+    digitalWrite(LED12, LOW);
+    digitalWrite(LED13, LOW);
+  }
+}
+
+void blinking_SOS() {
+  uint32_t t;
+  
+  // If we are entering the state, check for state transition and initialize
+  if (current_state != prior_state) {
+    prior_state = current_state;
+    
+    // Set all LEDs to LOW
+    digitalWrite(LED9, LOW);
+    digitalWrite(LED10, LOW);
+    digitalWrite(LED11, LOW);
+    digitalWrite(LED12, LOW);
+    digitalWrite(LED13, LOW);
+
+    blink_time = millis();
+  }
+
+  // Perform state tasks
+  t = millis();
+
+  if (t >= blink_time + BLINK_INTERVAL && s1_counter < 6) {
+//SSSSSSSSSSSSSSSSSSS
+    Serial.println("SSSSSSSS");
+      s2_counter = 0;
+//        digitalWrite(LED9, !digitalRead(LED9)); // this and the line below is if we want the "shorts" to be a physically shorter line
+        digitalWrite(LED9, LOW);        
+        digitalWrite(LED10, !digitalRead(LED10));
+        digitalWrite(LED11, !digitalRead(LED11));
+        digitalWrite(LED12, !digitalRead(LED12));
+//        digitalWrite(LED13, !digitalRead(LED13)); // this and the line below is if we want the "shorts" to be a physically shorter line
+        digitalWrite(LED13, LOW);
+        blink_time = t;
+//        delay(BLINK_INTERVAL*2);
+        s1_counter += 1;
+//        Serial.println("S1 : ");
+//        Serial.println(three_counter);
+  } else if (t >= blink_time + BLINK_INTERVAL*10 && o_counter < 6) {
+//OOOOOOOOOOOOOOOOOOOOOOOOOOOO
+    Serial.println("OOOOOOOO");
+    s1_counter = 0;
+//        while (three_counter < 6){
+    digitalWrite(LED9, !digitalRead(LED9));
+    digitalWrite(LED10, !digitalRead(LED10));
+    digitalWrite(LED11, !digitalRead(LED11));
+    digitalWrite(LED12, !digitalRead(LED12));
+    digitalWrite(LED13, !digitalRead(LED13));
+    blink_time = t;
+//        delay(BLINK_INTERVAL*4);
+    o_counter += 1;
+//        Serial.println("O : ");
+//        Serial.println(three_counter);
+  } else if (t >= blink_time + BLINK_INTERVAL*20 && s2_counter < 6) { 
+//SSSSSSSSSSSSSSSSSSS
+    Serial.println("SSSSSSSS");
+        o_counter = 0;
+//      while (three_counter < 6){
+//        digitalWrite(LED9, !digitalRead(LED9)); // this and the line below is if we want the "shorts" to be a physically shorter line
+        digitalWrite(LED9, LOW);        
+        digitalWrite(LED10, !digitalRead(LED10));
+        digitalWrite(LED11, !digitalRead(LED11));
+        digitalWrite(LED12, !digitalRead(LED12));
+//        digitalWrite(LED13, !digitalRead(LED13)); // this and the line below is if we want the "shorts" to be a physically shorter line
+        digitalWrite(LED13, LOW);
+        blink_time = t;
+//        delay(BLINK_INTERVAL*2);
+        s2_counter += 1;
+//        Serial.println("S2: ");
+//        Serial.println(three_counter);
+      }
+//        delay(BLINK_INTERVAL*3);
 
   bool SW_high;                        // Local variable to store whether SW is high
   t = millis();                         // Get the current value of the millis timer
@@ -270,13 +373,10 @@ void setup() {
 }
 
 void loop() {
-  Serial.print(prior_state);
-  Serial.print(" -> ");
-  Serial.println(current_state);
+//  Serial.print(prior_state);
+//  Serial.print(" -> ");
+//  Serial.println(current_state);
   switch (current_state) {
-    Serial.print(prior_state);
-    Serial.print(" -> ");
-    Serial.println(current_state);
     case ALL_ON:
       all_on();
       break;
