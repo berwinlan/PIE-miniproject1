@@ -87,7 +87,7 @@ void all_on() {
     debounce_time = t;
   }
   
-  // If we are leaving the state, clean up
+  // If leaving, clean up and turn off LEDs
   if (current_state != prior_state) { 
     digitalWrite(LED9, LOW);
     digitalWrite(LED10, LOW);
@@ -130,7 +130,7 @@ void all_off() {
     debounce_time = t;
   }
 
-  // Clean up if leaving
+  // If leaving, clean up and turn off LEDs
   if (current_state != prior_state) {
     // Set all LEDs to LOW
     digitalWrite(LED9, HIGH);
@@ -184,7 +184,7 @@ void all_blinking() {
     debounce_time = t;
   }
 
-  // Clean up if leaving
+  // If leaving, clean up and turn off LEDs
   if (current_state != prior_state) { 
     digitalWrite(LED9, LOW);
     digitalWrite(LED10, LOW);
@@ -194,7 +194,7 @@ void all_blinking() {
   }
 }
 
-// TODO: LEDs aren\'t fully turning on and off (see for loop for how it should work)
+
 void traveling() {
   uint32_t t;
   uint16_t TRAVEL_INTERVAL = 300; // length of time each light is on (ms)
@@ -254,7 +254,7 @@ void traveling() {
     debounce_time = t;
   }
 
-  // If leaving, clean up
+  // If leaving, clean up and turn off LEDs
   if (current_state != prior_state) {
     digitalWrite(LED9, LOW);
     digitalWrite(LED10, LOW);
@@ -264,7 +264,7 @@ void traveling() {
   }
 }
 
-// TODO: doesn\'t pause atm :(
+
 void blinking_SOS() {
   uint32_t t;
   
@@ -289,29 +289,19 @@ void blinking_SOS() {
   // Perform state tasks
   t = millis();
 
-//SSSSSSSSSSSSSSSSSSS
+// First morse code S
   if (t >= blink_time + S_INTERVAL && s1_counter < 6) {
-    Serial.println(\"1SSSSSSSS\");
-//        digitalWrite(LED9, !digitalRead(LED9)); // this and the line below is if we want the \"shorts\" to be a physically shorter line
         digitalWrite(LED9, LOW);        
         digitalWrite(LED10, !digitalRead(LED10));
         digitalWrite(LED11, !digitalRead(LED11));
         digitalWrite(LED12, !digitalRead(LED12));
-//        digitalWrite(LED13, !digitalRead(LED13)); // this and the line below is if we want the \"shorts\" to be a physically shorter line
         digitalWrite(LED13, LOW);
         blink_time = t;
-
-//        Serial.print(\"S1 before : \");
-//        Serial.println(s1_counter);
         s1_counter++;
-//        Serial.print(\"S1 : \");
-//        Serial.println(s1_counter);
 
-//OOOOOOOOOOOOOOOOOOOOOOOOOOOO
+        
+// Morse code O
   } else if (t >= blink_time + O_INTERVAL && s1_counter == 6) {
-
-    Serial.println(\"OOOOOOOO\");
-//        while (three_counter < 6){
     digitalWrite(LED9, !digitalRead(LED9));
     digitalWrite(LED10, !digitalRead(LED10));
     digitalWrite(LED11, !digitalRead(LED11));
@@ -319,25 +309,19 @@ void blinking_SOS() {
     digitalWrite(LED13, !digitalRead(LED13));
     blink_time = t;
     o_counter++;
-//        Serial.println(\"O : \");
-//        Serial.println(o_counter);
-        
-//SSSSSSSSSSSSSSSSSSS
-// TODO: This part isn\'t working properly - changing it to +S_INTERVAL creates
+
+    
+// Second morse code S
   } else if (t >= blink_time + S_INTERVAL && o_counter == 6) { 
-//    Serial.println(\"2SSSSSSSS\");
-//        digitalWrite(LED9, !digitalRead(LED9)); // this and the line below is if we want the \"shorts\" to be a physically shorter line
         digitalWrite(LED9, LOW);        
         digitalWrite(LED10, !digitalRead(LED10));
         digitalWrite(LED11, !digitalRead(LED11));
         digitalWrite(LED12, !digitalRead(LED12));
-//        digitalWrite(LED13, !digitalRead(LED13)); // this and the line below is if we want the \"shorts\" to be a physically shorter line
         digitalWrite(LED13, LOW);
         blink_time = t;
         s2_counter++;
-//        Serial.println(\"S2: \");
-//        Serial.println(s2_counter);
-  } else if (t > blink_time + O_INTERVAL && s2_counter == 6) {   // pause between SOSes
+  // pause between SOSes
+  } else if (t > blink_time + O_INTERVAL && s2_counter == 6) {
     // Set all LEDs to LOW
     digitalWrite(LED9, LOW);
     digitalWrite(LED10, LOW);
@@ -366,7 +350,8 @@ void blinking_SOS() {
     debounce_time = t;
   }
 
-  if (current_state != prior_state) {         // If we are leaving the state, do clean up stuff
+  // If leaving, clean up and turn off LEDs
+  if (current_state != prior_state) {        
     digitalWrite(LED9, LOW);
     digitalWrite(LED10, LOW);
     digitalWrite(LED11, LOW);
@@ -385,13 +370,6 @@ void setup() {
   pinMode(SW, INPUT);
   pinMode(POT, INPUT);
   
-//  // Alternating lights = initialization complete
-//  digitalWrite(LED9, HIGH);
-//  digitalWrite(LED10, LOW);
-//  digitalWrite(LED11, HIGH);
-//  digitalWrite(LED12, LOW);
-//  digitalWrite(LED13, HIGH);
-
   prior_state = NONE;
   current_state = ALL_ON;
 
@@ -403,35 +381,21 @@ void setup() {
 }
 
 void loop() {
-//  Serial.print(prior_state);
-//  Serial.print(\" -> \");
-//  Serial.println(current_state);
   uint32_t t;
 
   t = millis();                         // Get the current value of the millis timer
 
-//  Serial.println(current_state);
+
   if (t >= debounce_time + DEBOUNCE_INTERVAL) {
     // read the analog in value:
     sensorValue = analogRead(POT);
     // map it to the range of the analog out:
     outputValue = map(sensorValue, 0, 1023, 0, 255);
-  
-    // write to the analogOutPins (LED9-LED13)
-//    analogWrite(LED9, outputValue);
-//    analogWrite(LED10, outputValue);
-//    analogWrite(LED11, outputValue);
-//    analogWrite(LED12, outputValue);
-//    analogWrite(LED13, outputValue);  
-      // print the results to the Serial Monitor:
-      Serial.print(\"sensor = \");
-      Serial.print(sensorValue);
-      Serial.print(\"\\t output = \");
-      Serial.println(outputValue);
-    
+
     debounce_time = t;
   }
 
+// Switching between states
   switch (current_state) {
     case ALL_ON:
       all_on();
