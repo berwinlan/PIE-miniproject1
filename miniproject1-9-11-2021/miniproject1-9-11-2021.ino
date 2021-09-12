@@ -1,16 +1,16 @@
 
 // Say which component is connected to what pin
-const uint8_t LED9 = 9;
-const uint8_t LED10 = 10;
-const uint8_t LED11 = 11;
-const uint8_t LED12 = 12;
-const uint8_t LED13 = 13;
-const uint8_t SW = 8;
+const uint8_t LED9 = 9;   // 1st LED
+const uint8_t LED10 = 10; // 2nd LED
+const uint8_t LED11 = 11; // 3rd LED
+const uint8_t LED12 = 12; // 4th LED
+const uint8_t LED13 = 13; // 5th LED
+const uint8_t SW = 8;     // Switch
 
 // Variable LED brightness for ALL_ON state
-const int POT = A0; // Analog pin pot is attached to
-uint16_t sensorValue;        // value read from the pot
-uint16_t outputValue;        // value output to the PWM (analog out) - output ceiling, overwrite HIGH
+const int POT = A0;       // Analog pin pot is attached to
+uint16_t sensorValue;     // value read from the pot
+uint16_t outputValue;     // value output to the PWM (analog out) - output ceiling, overwrite HIGH
 
 // For debouncing
 const uint8_t DEBOUNCE_INTERVAL = 10; // ms
@@ -48,12 +48,6 @@ void all_on() {
   // If we are entering the state, check for state transition and initialize
   if (current_state != prior_state) {
     prior_state = current_state;
-//    digitalWrite(LED9, HIGH);
-//    digitalWrite(LED10, HIGH);
-//    digitalWrite(LED11, HIGH);
-//    digitalWrite(LED12, HIGH);
-//    digitalWrite(LED13, HIGH);
-
     analogWrite(LED9, outputValue);
     analogWrite(LED10, outputValue);
     analogWrite(LED11, outputValue);
@@ -76,11 +70,12 @@ void all_on() {
   Serial.println(outputValue);
 
   uint32_t t;                           // Local variable to store the current value of the millis timer
-  bool SW_high;                        // Local variable to store whether SW is high
+  bool SW_high;                         // Local variable to store whether SW is high
 
   t = millis();                         // Get the current value of the millis timer
   
   // Check for state transitions
+  // Debounce the button
   if (t >= debounce_time + DEBOUNCE_INTERVAL) {
     SW_high = digitalRead(SW) == HIGH;
     if (SW_went_back_low && SW_high) {
@@ -91,8 +86,9 @@ void all_on() {
     }
     debounce_time = t;
   }
-
-  if (current_state != prior_state) {         // If we are leaving the state, do clean up stuff
+  
+  // If we are leaving the state, clean up
+  if (current_state != prior_state) { 
     digitalWrite(LED9, LOW);
     digitalWrite(LED10, LOW);
     digitalWrite(LED11, LOW);
@@ -114,14 +110,15 @@ void all_off() {
     digitalWrite(LED13, LOW);
   }
 
-  // No state tasks
-//  Serial.println(\"ALL_OFF state task\");
+// No state tasks
 
   uint32_t t;                           // Local variable to store the current value of the millis timer
-  bool SW_high;                        // Local variable to store whether SW is high
+  bool SW_high;                         // Local variable to store whether SW is high
 
   t = millis();                         // Get the current value of the millis timer
 
+  // Check for state transitions
+  // Debounce the button
   if (t >= debounce_time + DEBOUNCE_INTERVAL) {
     SW_high = digitalRead(SW) == HIGH;
     if (SW_went_back_low && SW_high) {
@@ -161,8 +158,6 @@ void all_blinking() {
   }
 
   // Perform state tasks
-//  Serial.println(\"BLINKING state task\");
-
   t = millis();
   if (t >= blink_time + BLINK_INTERVAL) {
     digitalWrite(LED9, !digitalRead(LED9));
@@ -174,9 +169,10 @@ void all_blinking() {
   }
 
   bool SW_high;                        // Local variable to store whether SW is high
-
   t = millis();                         // Get the current value of the millis timer
 
+  // Check for state transitions
+  // Debounce the button
   if (t >= debounce_time + DEBOUNCE_INTERVAL) {
     SW_high = digitalRead(SW) == HIGH;
     if (SW_went_back_low && SW_high) {
@@ -188,7 +184,8 @@ void all_blinking() {
     debounce_time = t;
   }
 
-  if (current_state != prior_state) {         // If we are leaving the state, do clean up stuff
+  // Clean up if leaving
+  if (current_state != prior_state) { 
     digitalWrite(LED9, LOW);
     digitalWrite(LED10, LOW);
     digitalWrite(LED11, LOW);
@@ -219,39 +216,33 @@ void traveling() {
   // Perform state tasks
   t = millis();
   if (t >= travel_time + TRAVEL_INTERVAL_LED9 && t < travel_time + TRAVEL_INTERVAL_LED10) {
-//    Serial.println(\"interval LED9\");
+    // Blink the first LED if it is the correct time
     digitalWrite(LED9, !digitalRead(LED9));
     digitalWrite(LED10, !digitalRead(LED10));
   } else if (t >= travel_time + TRAVEL_INTERVAL_LED10 && t < travel_time + TRAVEL_INTERVAL_LED11) {
-//    Serial.println(\"interval LED10\");
+    // Blink the second LED if it is the correct time
     digitalWrite(LED10, !digitalRead(LED10));
     digitalWrite(LED11, !digitalRead(LED11));
   } else if (t >= travel_time + TRAVEL_INTERVAL_LED11 && t < travel_time + TRAVEL_INTERVAL_LED12) {
-//    Serial.println(\"interval LED11\");
+    // Blink the third LED if it is the correct time
     digitalWrite(LED11, !digitalRead(LED11));
     digitalWrite(LED12, !digitalRead(LED12));
   } else if (t >= travel_time + TRAVEL_INTERVAL_LED12 && t < travel_time + TRAVEL_INTERVAL_LED13) {
-//    Serial.println(\"interval LED12\");
+    // Blink the fourth LED if it is the correct time
     digitalWrite(LED12, !digitalRead(LED12));
     digitalWrite(LED13, !digitalRead(LED13));
   } else if (t >= travel_time + TRAVEL_INTERVAL_LED13) {
-//    Serial.println(\"interval LED13\");
+    // Blink the fifth LED if it is the correct time
     digitalWrite(LED13, !digitalRead(LED13));
     digitalWrite(LED9, !digitalRead(LED9));
     travel_time = t;
   }
  
-//  // Perform state tasks
-//  for (int i = LED9; i <= LED13; i++) {
-//    delay(TRAVEL_INTERVAL);
-//    digitalWrite(i, !digitalRead(i));
-//    digitalWrite(i+1, !digitalRead(i+1));
-//  }
-//  digitalWrite(LED9, HIGH);
-
-  bool SW_high;                        // Local variable to store whether SW is high
+  bool SW_high;                         // Local variable to store whether SW is high
   t = millis();                         // Get the current value of the millis timer
 
+  // Check for state transitions
+  // Debounce the button
   if (t >= debounce_time + DEBOUNCE_INTERVAL) {
     SW_high = digitalRead(SW) == HIGH;
     if (SW_went_back_low && SW_high) {
@@ -263,7 +254,8 @@ void traveling() {
     debounce_time = t;
   }
 
-  if (current_state != prior_state) {         // If we are leaving the state, do clean up stuff
+  // If leaving, clean up
+  if (current_state != prior_state) {
     digitalWrite(LED9, LOW);
     digitalWrite(LED10, LOW);
     digitalWrite(LED11, LOW);
@@ -362,6 +354,7 @@ void blinking_SOS() {
   t = millis();                         // Get the current value of the millis timer
 
   // Check for state transitions
+  // Debounce the button
   if (t >= debounce_time + DEBOUNCE_INTERVAL) {
     SW_high = digitalRead(SW) == HIGH;
     if (SW_went_back_low && SW_high) {
